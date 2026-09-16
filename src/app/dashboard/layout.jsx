@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import SidebarNav from '@/components/SidebarNav';
 
 export default async function DashboardLayout({ children }) {
   const session = await getServerSession(authOptions);
@@ -14,18 +15,7 @@ export default async function DashboardLayout({ children }) {
             DevPipe
           </h2>
         </div>
-        <nav className="flex-1 space-y-1 font-mono text-sm">
-          {/* Active state is left border in accent, not filled */}
-          <Link href="/dashboard" className="block px-6 py-2 border-l-2 border-accent text-text-main hover:bg-surface-raised/50">
-            <span className="text-accent mr-2">{'>'}</span> Drafts
-          </Link>
-          <Link href="/dashboard/accounts" className="block px-6 py-2 border-l-2 border-transparent text-text-muted hover:text-text-main hover:bg-surface-raised/50">
-            <span className="mr-2 text-surface-raised">#</span> Accounts
-          </Link>
-          <Link href="/dashboard/settings" className="block px-6 py-2 border-l-2 border-transparent text-text-muted hover:text-text-main hover:bg-surface-raised/50">
-            <span className="mr-2 text-surface-raised">~</span> Settings
-          </Link>
-        </nav>
+        <SidebarNav />
         <div className="p-6 border-t border-surface-raised">
           <div className="flex items-center space-x-3">
             {session?.user?.image ? (

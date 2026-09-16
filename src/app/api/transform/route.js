@@ -17,7 +17,7 @@ export const POST = defineRoute({
     try {
       const completion = await groq.chat.completions.create({
         messages: [{ role: 'user', content: prompt }],
-        model: 'qwen/qwen3.8-27b',
+        model: 'openai/gpt-oss-120b',
         response_format: { type: "json_object" }
       });
 

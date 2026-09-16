@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -15,6 +15,24 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
   
   // Keep local track of transformed content before saving
   const [transformedContent, setTransformedContent] = useState(null);
+
+  const [repos, setRepos] = useState([]);
+  const [isLoadingRepos, setIsLoadingRepos] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/user/repos')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setRepos(data.data);
+          if (!projectName && data.data.length > 0) {
+            setProjectName(data.data[0]);
+          }
+        }
+        setIsLoadingRepos(false);
+      })
+      .catch(() => setIsLoadingRepos(false));
+  }, []);
 
   const handleSave = async () => {
     if (!projectName || !version || !masterContent) {
@@ -88,14 +106,30 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
     <div className="bg-surface border border-surface-raised flex flex-col flex-1 shadow-none rounded-sm overflow-hidden">
       <div className="p-4 border-b border-surface-raised flex space-x-4 bg-ink">
         <div className="flex-1">
-          <label className="block font-mono text-xs text-text-muted mb-2">Project Name</label>
-          <input 
-            type="text" 
-            placeholder="devpipe" 
-            className="w-full bg-surface-raised border border-surface-raised rounded-sm px-3 py-1.5 text-text-main focus:outline-none focus:border-accent transition font-mono text-sm"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-          />
+          <label className="block font-mono text-xs text-text-muted mb-2">GitHub Repository</label>
+          {isLoadingRepos ? (
+            <div className="w-full bg-surface-raised border border-surface-raised rounded-sm px-3 py-1.5 text-text-muted font-mono text-sm animate-pulse">
+              loading_repos...
+            </div>
+          ) : repos.length > 0 ? (
+            <select 
+              className="w-full bg-surface-raised border border-surface-raised rounded-sm px-3 py-1.5 text-text-main focus:outline-none focus:border-accent transition font-mono text-sm appearance-none"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+            >
+              {repos.map(repo => (
+                <option key={repo} value={repo}>{repo}</option>
+              ))}
+            </select>
+          ) : (
+            <input 
+              type="text" 
+              placeholder="devpipe" 
+              className="w-full bg-surface-raised border border-surface-raised rounded-sm px-3 py-1.5 text-text-main focus:outline-none focus:border-accent transition font-mono text-sm"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+            />
+          )}
         </div>
         <div className="w-1/3">
           <label className="block font-mono text-xs text-text-muted mb-2">Version</label>
@@ -152,10 +186,8 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
               p: ({node, ...props}) => <p className="text-text-main font-sans text-sm mb-4 leading-relaxed" {...props} />,
               ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 text-sm text-text-main font-sans space-y-1" {...props} />,
               ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 text-sm text-text-main font-sans space-y-1" {...props} />,
-              code: ({node, inline, ...props}) => 
-                inline 
-                  ? <code className="bg-surface-raised text-text-main px-1.5 py-0.5 rounded-sm font-mono text-xs" {...props} />
-                  : <pre className="bg-surface-raised text-text-main p-4 rounded-sm font-mono text-xs overflow-auto mb-4"><code {...props} /></pre>,
+              pre: ({node, ...props}) => <pre className="bg-surface-raised text-text-main p-4 rounded-sm font-mono text-xs overflow-auto mb-4 [&>code]:bg-transparent [&>code]:p-0 [&>code]:text-inherit" {...props} />,
+              code: ({node, ...props}) => <code className="bg-surface-raised text-text-main px-1.5 py-0.5 rounded-sm font-mono text-xs" {...props} />,
               blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-accent pl-4 italic text-text-muted mb-4" {...props} />,
               a: ({node, ...props}) => <a className="text-accent underline hover:no-underline" {...props} />
             }}>

@@ -55,7 +55,7 @@ export const GET = defineRoute({
     if (!session || !session.user || !session.user.id) {
       return ctx.error(401, "Unauthorized");
     }
-    const releases = await ctx.db.Release.find({ userId: session.user.id }).sort({ createdAt: -1 });
+    const releases = await ctx.db.Release.find({ userId: session.user.id }).sort({ updatedAt: -1 });
     return { success: true, data: releases };
   }
 });

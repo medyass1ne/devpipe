@@ -4,9 +4,10 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-export default function PlatformPreview({ release, onPublish, isTransforming }) {
+export default function PlatformPreview({ release, onUpdateRelease, isTransforming }) {
   const [activeTab, setActiveTab] = useState('github');
   const [viewMode, setViewMode] = useState('code'); // 'code' or 'preview'
+  const [isPublishing, setIsPublishing] = useState(false);
   
   // The new schema uses release.transformedContent instead of platformStates
   if (!release || !release.transformedContent || Object.keys(release.transformedContent).length === 0) {
@@ -19,7 +20,26 @@ export default function PlatformPreview({ release, onPublish, isTransforming }) 
 
   const platforms = ['github', 'devto', 'hashnode', 'reddit'];
   const content = release.transformedContent[activeTab];
+  const publishStates = release.publishStates || {};
+  const activeState = publishStates[activeTab] || {};
   const status = release.status || 'draft';
+
+  const handlePublish = async () => {
+    if (!release._id) return;
+    setIsPublishing(true);
+    try {
+      const res = await fetch(`/api/releases/${release._id}/publish`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (onUpdateRelease) onUpdateRelease(data.data);
+      } else {
+        alert(data.error || 'Failed to publish');
+      }
+    } catch (e) {
+      alert('Network error while publishing');
+    }
+    setIsPublishing(false);
+  };
 
   // Status pill as diff marker
   const getStatusMarker = (status) => {
@@ -33,6 +53,18 @@ export default function PlatformPreview({ release, onPublish, isTransforming }) 
 
   return (
     <div className={`bg-surface border border-surface-raised flex flex-col flex-1 rounded-sm ${isTransforming ? 'opacity-50' : 'opacity-100'} transition-opacity duration-300 min-h-[300px] overflow-hidden`}>
+      {/* Top Bar with Publish All */}
+      <div className="p-3 border-b border-surface-raised bg-ink flex justify-between items-center">
+        <span className="font-mono text-xs text-text-muted">Syndication</span>
+        <button 
+          onClick={handlePublish}
+          disabled={isPublishing || !release._id || status !== 'transformed'}
+          className="px-4 py-1.5 font-mono text-xs transition rounded-sm border border-accent text-accent hover:bg-accent hover:text-ink disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isPublishing ? 'publishing...' : 'publish_all'}
+        </button>
+      </div>
+
       {/* Tabs */}
       <div className="flex border-b border-surface-raised bg-surface">
         {platforms.map(platform => {
@@ -41,7 +73,7 @@ export default function PlatformPreview({ release, onPublish, isTransforming }) 
             <button
               key={platform}
               onClick={() => setActiveTab(platform)}
-              className={`flex-1 py-3 text-xs font-mono transition flex items-center justify-center space-x-1 border-b-2 ${
+              className={`flex-1 py-3 text-xs font-mono transition flex items-center justify-center space-x-2 border-b-2 ${
                 isActive 
                   ? 'border-accent bg-surface-raised text-text-main' 
                   : 'border-transparent text-text-muted hover:text-text-main hover:bg-surface-raised'
@@ -49,6 +81,8 @@ export default function PlatformPreview({ release, onPublish, isTransforming }) 
             >
               <span className="text-accent">{isActive ? '▼' : '▶'}</span>
               <span>{platform}</span>
+              {publishStates[platform]?.status === 'published' && <span className="text-diff-add">✔</span>}
+              {publishStates[platform]?.status === 'failed' && <span className="text-diff-remove">✖</span>}
             </button>
           );
         })}
@@ -73,7 +107,11 @@ export default function PlatformPreview({ release, onPublish, isTransforming }) 
         </div>
 
         <div className="absolute top-10 right-0 p-2 z-10 text-xs font-mono">
-           {getStatusMarker(status)}
+           {activeState.status === 'published' ? (
+             <span className="text-diff-add bg-diff-add/10 px-2 py-0.5">+ published</span>
+           ) : activeState.status === 'failed' ? (
+             <span className="text-diff-remove bg-diff-remove/10 px-2 py-0.5">- failed</span>
+           ) : getStatusMarker(status)}
         </div>
 
         {viewMode === 'code' ? (
@@ -89,10 +127,8 @@ export default function PlatformPreview({ release, onPublish, isTransforming }) 
               p: ({node, ...props}) => <p className="text-text-main font-sans text-sm mb-4 leading-relaxed" {...props} />,
               ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 text-sm text-text-main font-sans space-y-1" {...props} />,
               ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 text-sm text-text-main font-sans space-y-1" {...props} />,
-              code: ({node, inline, ...props}) => 
-                inline 
-                  ? <code className="bg-surface-raised text-text-main px-1.5 py-0.5 rounded-sm font-mono text-xs" {...props} />
-                  : <pre className="bg-surface-raised text-text-main p-4 rounded-sm font-mono text-xs overflow-auto mb-4"><code {...props} /></pre>,
+              pre: ({node, ...props}) => <pre className="bg-surface-raised text-text-main p-4 rounded-sm font-mono text-xs overflow-auto mb-4 [&>code]:bg-transparent [&>code]:p-0 [&>code]:text-inherit" {...props} />,
+              code: ({node, ...props}) => <code className="bg-surface-raised text-text-main px-1.5 py-0.5 rounded-sm font-mono text-xs" {...props} />,
               blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-accent pl-4 italic text-text-muted mb-4" {...props} />,
               a: ({node, ...props}) => <a className="text-accent underline hover:no-underline" {...props} />
             }}>
@@ -103,18 +139,32 @@ export default function PlatformPreview({ release, onPublish, isTransforming }) 
       </div>
 
       {/* Footer */}
-      <div className="p-4 bg-surface flex justify-end">
-        <button 
-          onClick={() => onPublish && onPublish(activeTab)}
-          disabled={status === 'published' || status === 'draft' || !status}
-          className={`px-4 py-2 font-mono text-sm transition rounded-sm border ${
-            status === 'published' || status === 'draft' || !status
-              ? 'border-surface-raised text-text-muted bg-ink cursor-not-allowed'
-              : 'border-accent text-accent hover:bg-accent hover:text-ink bg-ink'
-          }`}
-        >
-          publish --to {activeTab}
-        </button>
+      <div className="p-4 bg-surface flex justify-between items-center">
+        <div className="flex-1">
+          {activeState.status === 'published' && activeState.url ? (
+            <a href={activeState.url} target="_blank" rel="noreferrer" className="text-diff-add font-mono text-sm hover:underline flex items-center space-x-2">
+              <span>+ published: {activeState.url}</span>
+            </a>
+          ) : activeState.status === 'failed' && activeState.error ? (
+            <span className="text-diff-remove font-mono text-sm">- failed: {activeState.error}</span>
+          ) : activeState.status === 'pending_auth' ? (
+            <span className="text-text-muted font-mono text-sm">// Platform auth pending</span>
+          ) : null}
+        </div>
+        
+        {activeState.status !== 'published' && (
+          <button 
+            onClick={handlePublish}
+            disabled={isPublishing || !release._id || status !== 'transformed'}
+            className={`px-4 py-2 font-mono text-sm transition rounded-sm border ${
+              isPublishing || !release._id || status !== 'transformed'
+                ? 'border-surface-raised text-text-muted bg-ink cursor-not-allowed'
+                : 'border-accent text-accent hover:bg-accent hover:text-ink bg-ink'
+            }`}
+          >
+            publish --to {activeTab}
+          </button>
+        )}
       </div>
     </div>
   );

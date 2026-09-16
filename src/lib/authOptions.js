@@ -7,6 +7,7 @@ export const authOptions = {
     GithubProvider({
       clientId: process.env.GITHUB_ID || "",
       clientSecret: process.env.GITHUB_SECRET || "",
+      authorization: { params: { scope: 'read:user user:email public_repo' } }
     }),
   ],
   callbacks: {
@@ -19,7 +20,13 @@ export const authOptions = {
           const githubId = profile.id.toString();
           const existingUser = await User.findOneAndUpdate(
             { githubId },
-            { name: user.name, email: user.email, image: user.image },
+            { 
+              name: user.name, 
+              email: user.email, 
+              image: user.image,
+              githubUsername: profile.login,
+              githubAccessToken: account.access_token 
+            },
             { upsert: true, new: true }
           );
           user.mongoId = existingUser._id.toString();
@@ -50,4 +57,7 @@ export const authOptions = {
   },
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET || "default_secret_for_dev",
+  pages: {
+    signIn: '/login',
+  },
 };
