@@ -10,9 +10,14 @@
   },
   "dependencies": {
     "bro-framework": "^2.4.5",
+    "groq-sdk": "^1.6.0",
+    "mongoose": "^9.10.1",
     "next": "16.3.5",
+    "next-auth": "^4.24.15",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

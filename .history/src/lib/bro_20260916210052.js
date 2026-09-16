@@ -1,8 +1,5 @@
 import { createBro, z } from 'bro-framework/next';
 import en from '../locale/en.json';
-import mongoose from "mongoose";
-import User from "@/models/User";
-import Release from "@/models/Release";
 
 // Central bro.js configuration for this Next.js application.
 const { defineRoute } = createBro({
@@ -21,17 +18,10 @@ const { defineRoute } = createBro({
   rateLimit: { windowMs: 10000, max: 5 }, // Allow five requests per client during each ten-second window.
 
   // Optional database connection. Uncomment and install mongoose when needed.
-  db: async () => {
-    try {
-      await mongoose.connect(process.env.MONGO_URI);
-      console.log("Database connected!");
-      
-      return { User, Release };
-    }catch(err) {
-      console.error(err);
-      return null;
-    }
-  },
+  // db: async () => {
+  //   const mongoose = await import('mongoose');
+  //   return mongoose.connect(process.env.MONGODB_URI);
+  // },
 
   // Optional Redis connection for distributed caching and rate limiting.
   // redisUrl: process.env.REDIS_URL,

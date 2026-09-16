@@ -2,7 +2,6 @@ import { createBro, z } from 'bro-framework/next';
 import en from '../locale/en.json';
 import mongoose from "mongoose";
 import User from "@/models/User";
-import Release from "@/models/Release";
 
 // Central bro.js configuration for this Next.js application.
 const { defineRoute } = createBro({
@@ -23,10 +22,9 @@ const { defineRoute } = createBro({
   // Optional database connection. Uncomment and install mongoose when needed.
   db: async () => {
     try {
-      await mongoose.connect(process.env.MONGO_URI);
-      console.log("Database connected!");
+      await mongoose.connect(process.env.MONGODB_URI);
       
-      return { User, Release };
+      return { User };
     }catch(err) {
       console.error(err);
       return null;
