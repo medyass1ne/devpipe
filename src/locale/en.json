@@ -1,0 +1,6 @@
+{
+  "welcome": "Welcome to bro.js on Next.js, {name}!",
+  "errors": {
+    "notFound": "Resource not found"
+  }
+}
