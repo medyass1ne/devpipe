@@ -7,6 +7,13 @@ import { getSession, signOut } from 'next-auth/react';
 
 export default function LandingPage() {
   const [session, setSession] = useState(null);
+  const [stars, setStars] = useState(null);
+
+  useEffect(() => {
+    fetch("https://api.github.com/repos/medyass1ne/devpipe/stargazers/count").then(res => res.json()).then(data => {
+      setStars(data.count);
+    });
+  }, []);
 
   useEffect(() => {
     getSession().then(setSession);
@@ -49,7 +56,7 @@ export default function LandingPage() {
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="#features" className="font-mono text-sm text-text-muted hover:text-text-main transition">Features</Link>
             <Link href="#docs" className="font-mono text-sm text-text-muted hover:text-text-main transition">Docs</Link>
-            <a href="https://github.com/devpipe" target="_blank" rel="noreferrer" className="text-text-muted hover:text-text-main transition">
+            <a href="https://github.com/medyass1ne/devpipe" target="_blank" rel="noreferrer" className="text-text-muted hover:text-text-main transition">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
               </svg>
@@ -252,7 +259,7 @@ export default function LandingPage() {
         <section className="w-full border-y border-surface-raised bg-surface py-6 px-6">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between font-mono text-sm space-y-4 md:space-y-0">
             <div className="flex space-x-8 text-text-main">
-              <span>★ 1,240</span>
+              <span hidden={stars == null}>★ {stars}</span>
               <span>MIT licensed</span>
             </div>
             <div className="text-text-muted italic">
@@ -274,16 +281,16 @@ export default function LandingPage() {
             
             <div className="flex flex-col space-y-4">
               <h4 className="font-mono text-text-main font-bold text-sm">Product</h4>
-              <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">Features</Link>
-              <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">Pricing</Link>
-              <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">Changelog</Link>
+              <Link href="#features" className="font-mono text-xs text-text-muted hover:text-text-main transition">Features</Link>
+              {/* <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">Pricing</Link> */}
+              <Link href="https://github.com/medyass1ne/devpipe/releases" className="font-mono text-xs text-text-muted hover:text-text-main transition">Changelog</Link>
             </div>
             
             <div className="flex flex-col space-y-4">
               <h4 className="font-mono text-text-main font-bold text-sm">Resources</h4>
-              <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">Docs</Link>
-              <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">GitHub</Link>
-              <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">Status</Link>
+              {/* <Link href="#docs" className="font-mono text-xs text-text-muted hover:text-text-main transition">Docs</Link> */}
+              <Link href="https://github.com/medyass1ne/devpipe" className="font-mono text-xs text-text-muted hover:text-text-main transition">GitHub</Link>
+              {/* <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">Status</Link> */}
             </div>
             
             {/* <div className="flex flex-col space-y-4">
