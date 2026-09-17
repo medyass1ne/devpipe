@@ -45,6 +45,7 @@ CRITICAL JSON RULES:
 1. DO NOT wrap the output in Markdown blocks (no \`\`\`json).
 2. Escape all internal quotes, backticks, and newlines properly so the JSON does not break.
 3. Ensure no trailing commas or extra brackets.
+4. DO NOT double-escape newlines. Use standard single \`\\n\` for line breaks. Do NOT output literal \`\\\\n\`.
 
 REQUIRED JSON STRUCTURE:
 {
@@ -70,7 +71,26 @@ REQUIRED JSON STRUCTURE:
         return ctx.error(500, "Failed to generate transformation");
       }
 
-      return JSON.parse(output);
+      const parsed = JSON.parse(output);
+
+      const sanitizeNewlines = (obj) => {
+        if (typeof obj === 'string') {
+          return obj.replace(/\\n/g, '\n');
+        }
+        if (Array.isArray(obj)) {
+          return obj.map(item => sanitizeNewlines(item));
+        }
+        if (obj !== null && typeof obj === 'object') {
+          const newObj = {};
+          for (const key in obj) {
+            newObj[key] = sanitizeNewlines(obj[key]);
+          }
+          return newObj;
+        }
+        return obj;
+      };
+
+      return sanitizeNewlines(parsed);
     } catch (e) {
       console.error(e.message || e.error?.failed_generation || e);
       return ctx.error(500, 'Transformation failed due to complex Markdown formatting. Please try again.');

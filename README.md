@@ -36,7 +36,7 @@ DevPipe is a single Next.js (App Router) application. API routes are defined
 with the bro.js framework via the `bro-framework/next` adapter, which handles
 request validation (Zod), rate limiting, and caching at the route level.
 
-| Layer    | Stack                                  |
+| Layer    | Stack                                   |
 | -------- | --------------------------------------- |
 | Frontend | Next.js, Tailwind CSS, Framer Motion    |
 | Backend  | bro.js, NextAuth.js (GitHub OAuth)      |
