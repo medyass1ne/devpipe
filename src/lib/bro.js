@@ -34,7 +34,7 @@ const { defineRoute } = createBro({
   },
 
   // Optional Redis connection for distributed caching and rate limiting.
-  // redisUrl: process.env.REDIS_URL,
+  redisUrl: process.env.REDIS_URL,
 
   // Locales are resolved by ctx.t() in route handlers.
   locales: {
