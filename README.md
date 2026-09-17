@@ -19,15 +19,15 @@ publish from one place.
 
 ## Features
 
-- **AI-assisted transforms** — Groq (gpt-oss-120b) rewrites your draft into a
+- **AI-assisted transforms** - Groq (gpt-oss-120b) rewrites your draft into a
   platform-appropriate title, structure, and tags, adjusting for whether the
   release is a first launch or a minor update.
-- **Mixed publishing model** — direct, parallel API dispatch to platforms that
+- **Mixed publishing model** - direct, parallel API dispatch to platforms that
   support it or expose it for free (GitHub, Dev.to) and a pre-filled copy-and-open flow for platforms
   that don't expose a public posting API.
-- **Rate limiting and caching** — Redis-backed, applied at the API layer by
+- **Rate limiting and caching** - Redis-backed, applied at the API layer by
   default, no extra setup required.
-- **Crawler-friendly output** — a dedicated `llms.txt` endpoint and structured
+- **Crawler-friendly output** - a dedicated `llms.txt` endpoint and structured
   JSON-LD for pages indexed by AI search tools.
 
 ## Architecture
@@ -72,7 +72,7 @@ Rename `.env.example` to `.env` and fill in the values:
 
 ## Contributing
 
-Contributions are welcome, particularly new platform adapters — Medium,
+Contributions are welcome, particularly new platform adapters such as Medium,
 Substack, and Discord webhooks are natural next targets. Open an issue or
 discussion before starting on a larger feature so the approach can be agreed
 on first.
