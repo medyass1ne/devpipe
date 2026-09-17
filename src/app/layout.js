@@ -13,8 +13,20 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
-  title: "DevPipe",
-  description: "Syndicate your releases everywhere.",
+  title: {
+    template: "%s | DevPipe",
+    default: "DevPipe - Write once. Syndicate everywhere.",
+  },
+  description: "DevPipe is a tool for open-source maintainers to draft, format, and publish release notes to GitHub, Dev.to, Hashnode, and Reddit simultaneously.",
+  applicationName: 'DevPipe',
+  openGraph: {
+    title: "DevPipe",
+    description: "Write once. Syndicate everywhere. AI-powered release notes.",
+    url: "https://devpipe.yessindevs.me",
+    siteName: "DevPipe",
+    locale: "en_US",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }) {

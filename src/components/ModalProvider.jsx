@@ -66,7 +66,7 @@ export const ModalProvider = ({ children }) => {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               transition={{ type: "spring", duration: 0.3 }}
-              className="bg-surface border border-surface-raised rounded-sm p-6 max-w-md w-full mx-4 shadow-xl"
+              className="bg-surface border border-surface-raised rounded-sm p-6 max-w-md w-[90%] md:w-full mx-auto shadow-xl"
             >
               <div className="font-mono text-text-main text-sm mb-6 whitespace-pre-wrap">
                 {modalConfig.message}

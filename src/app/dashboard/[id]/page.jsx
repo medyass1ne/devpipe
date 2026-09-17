@@ -57,7 +57,7 @@ export default function EditDraftPage() {
       
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 pb-6">
-        <div className="w-full lg:w-[60%] flex flex-col min-h-[400px]">
+        <div className="w-full lg:w-1/2 flex flex-col min-h-[50vh] lg:min-h-0">
           <ReleaseEditor 
             releaseId={release._id}
             onUpdateRelease={handleUpdateRelease} 
@@ -67,7 +67,7 @@ export default function EditDraftPage() {
             initialMasterContent={release.masterContent}
           />
         </div>
-        <div className="w-full lg:w-[40%] flex flex-col min-h-[400px]">
+        <div className="w-full lg:w-1/2 flex flex-col min-h-[50vh] lg:min-h-0">
           <PlatformPreview 
             release={release} 
             onUpdateRelease={handleUpdateRelease} 

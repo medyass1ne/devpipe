@@ -178,8 +178,8 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
 
   return (
     <div className="bg-surface border border-surface-raised flex flex-col h-full flex-1 shadow-none rounded-sm overflow-hidden">
-      <div className="p-4 border-b border-surface-raised flex space-x-4 bg-ink">
-        <div className="flex-1">
+      <div className="p-4 border-b border-surface-raised flex flex-col md:flex-row gap-4 bg-ink">
+        <div className="w-full md:flex-1">
           <label className="block font-mono text-xs text-text-muted mb-2">GitHub Repository</label>
           {isLoadingRepos ? (
             <div className="w-full bg-surface-raised border border-surface-raised rounded-sm px-3 py-1.5 text-text-muted font-mono text-sm animate-pulse">
@@ -205,7 +205,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
             />
           )}
         </div>
-        <div className="w-1/4">
+        <div className="w-full md:w-1/4">
           <label className="block font-mono text-xs text-text-muted mb-2">Version</label>
           <input 
             type="text" 
@@ -215,7 +215,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
             onChange={(e) => setVersion(e.target.value)}
           />
         </div>
-        <div className="w-1/3">
+        <div className="w-full md:w-1/3">
           <label className="block font-mono text-xs text-text-muted mb-2">Release Type</label>
           <div className="flex border border-surface-raised rounded-sm overflow-hidden text-sm font-mono">
             <button 
@@ -297,8 +297,8 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
         <div className="absolute inset-0 border border-surface-raised pointer-events-none group-focus-within:border-accent transition"></div>
       </div>
 
-      <div className="shrink-0 flex justify-between items-center p-4 border-t border-surface-raised bg-surface">
-        <div>
+      <div className="shrink-0 flex flex-wrap gap-4 justify-between items-center p-4 border-t border-surface-raised bg-surface">
+        <div className="w-full sm:w-auto">
           {releaseId && (
             <button 
               onClick={handleDelete}
@@ -308,7 +308,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
             </button>
           )}
         </div>
-        <div className="flex space-x-4">
+        <div className="flex flex-wrap gap-4 w-full sm:w-auto sm:justify-end">
           <button 
             onClick={handleSave}
             disabled={isSaving || isTransforming}

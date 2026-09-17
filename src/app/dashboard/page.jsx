@@ -63,14 +63,14 @@ export default function DraftsListView() {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-8 flex flex-col h-full">
-      <div className="flex items-center justify-between border-b border-surface-raised pb-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-surface-raised pb-4 space-y-4 md:space-y-0">
         <h1 className="text-xl font-mono text-text-main lowercase">releases / drafts</h1>
-        <Link href="/dashboard/new" className="px-4 py-2 bg-accent text-ink font-mono font-bold text-sm hover:bg-opacity-90 transition rounded-sm">
+        <Link href="/dashboard/new" className="px-4 py-2 bg-accent text-ink font-mono font-bold text-sm hover:bg-opacity-90 transition rounded-sm w-full md:w-auto text-center">
           + create_draft
         </Link>
       </div>
       
-      <div className="flex space-x-4 border-b border-surface-raised pb-4">
+      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-hide space-x-4 border-b border-surface-raised pb-4">
         {['all', 'github', 'devto', 'hashnode', 'reddit'].map(f => (
           <button 
             key={f} 
@@ -85,7 +85,7 @@ export default function DraftsListView() {
       {isLoading ? (
         <div className="text-text-muted font-mono animate-pulse">loading_drafts...</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {filteredReleases.map(release => (
             <div 
               key={release._id}

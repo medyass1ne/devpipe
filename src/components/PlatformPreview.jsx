@@ -137,7 +137,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
       </div>
 
 
-      <div className="flex border-b border-surface-raised bg-surface">
+      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-hide border-b border-surface-raised bg-surface">
         {platforms.map(platform => {
           const isActive = activeTab === platform;
           return (
@@ -161,8 +161,8 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
 
 
       <div className="flex flex-col p-4 border-b border-surface-raised bg-ink space-y-3">
-        <div className="flex items-center space-x-2">
-          <label className="font-mono text-xs text-text-muted w-12">Title:</label>
+        <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-2">
+          <label className="font-mono text-xs text-text-muted w-auto md:w-12">Title:</label>
           <input 
             type="text"
             value={platformData.title || ''}
@@ -177,18 +177,18 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
                 });
               }
             }}
-            className="flex-1 bg-surface border border-surface-raised px-2 py-1 text-sm font-mono text-text-main focus:outline-none focus:border-accent rounded-sm"
+            className="flex-1 w-full bg-surface border border-surface-raised px-3 py-2 text-sm font-mono text-text-main focus:outline-none focus:border-accent rounded-sm"
           />
         </div>
         {(activeTab === 'devto' || activeTab === 'hashnode') && (
-          <div className="flex items-center space-x-2">
-            <label className="font-mono text-xs text-text-muted w-12">Tags:</label>
+          <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-2">
+            <label className="font-mono text-xs text-text-muted w-auto md:w-12">Tags:</label>
             <input 
               type="text"
               value={tagsInput}
               onChange={handleTagsChange}
               placeholder="javascript, react, webdev"
-              className="flex-1 bg-surface border border-surface-raised px-2 py-1 text-sm font-mono text-text-main focus:outline-none focus:border-accent rounded-sm"
+              className="flex-1 w-full bg-surface border border-surface-raised px-3 py-2 text-sm font-mono text-text-main focus:outline-none focus:border-accent rounded-sm"
             />
             {activeTab === 'devto' && (
               <span className="font-mono text-xs text-text-muted whitespace-nowrap">max 4 tags</span>
@@ -196,8 +196,8 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
           </div>
         )}
         {activeTab === 'reddit' && connections.reddit && (
-          <div className="flex items-center space-x-2">
-            <label className="font-mono text-xs text-text-muted w-12">Subreddit:</label>
+          <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-2">
+            <label className="font-mono text-xs text-text-muted w-auto md:w-16">Subreddit:</label>
             <input 
               type="text"
               value={platformData.subreddit || ''}
@@ -213,7 +213,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
                 }
               }}
               placeholder="r/node"
-              className="flex-1 bg-surface border border-surface-raised px-2 py-1 text-sm font-mono text-text-main focus:outline-none focus:border-accent rounded-sm"
+              className="flex-1 w-full bg-surface border border-surface-raised px-3 py-2 text-sm font-mono text-text-main focus:outline-none focus:border-accent rounded-sm"
             />
           </div>
         )}
