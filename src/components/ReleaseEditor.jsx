@@ -49,7 +49,6 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
     return () => clearInterval(timer);
   }, [cooldown]);
   
-  // Keep local track of transformed content before saving
   const [transformedContent, setTransformedContent] = useState(null);
 
   const [repos, setRepos] = useState([]);

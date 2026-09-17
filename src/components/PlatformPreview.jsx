@@ -122,7 +122,8 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
   };
 
   return (
-    <div className={`bg-surface border border-surface-raised flex flex-col flex-1 rounded-sm ${isTransforming ? 'opacity-50' : 'opacity-100'} transition-opacity duration-300 min-h-[300px] overflow-hidden`}>
+    <div className={`bg-surface border border-surface-raised flex flex-col h-full overflow-hidden rounded-sm ${isTransforming ? 'opacity-50' : 'opacity-100'} transition-opacity duration-300`}>
+      <div className="shrink-0 flex flex-col">
 
       <div className="p-3 border-b border-surface-raised bg-ink flex justify-between items-center">
         <span className="font-mono text-xs text-text-muted">Syndication</span>
@@ -218,8 +219,9 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
         )}
       </div>
 
+      </div>
 
-      <div className="flex-1 p-0 overflow-auto bg-ink border-b border-surface-raised relative min-h-[300px]">
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-ink border-b border-surface-raised relative">
 
         <div className="absolute top-2 right-4 z-10 flex space-x-1">
           <button 
@@ -248,7 +250,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
 
         {viewMode === 'code' ? (
           <textarea 
-            className="w-full bg-ink border-0 p-4 pt-12 text-sm font-mono text-text-main focus:outline-none resize-none h-full"
+            className="flex-1 min-h-0 overflow-y-auto w-full bg-ink border-0 p-4 pt-12 text-sm font-mono text-text-main focus:outline-none resize-none"
             value={platformData.content || ''}
             onChange={(e) => {
               if (onUpdateRelease) {
@@ -263,7 +265,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
             }}
           />
         ) : (
-          <div className="p-6 pt-12 overflow-auto h-full w-full">
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 pt-12 w-full">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
               h1: ({node, ...props}) => <h1 className="text-2xl font-bold font-sans text-text-main mt-6 mb-4" {...props} />,
               h2: ({node, ...props}) => <h2 className="text-xl font-bold font-sans text-text-main mt-5 mb-3" {...props} />,
@@ -283,7 +285,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
       </div>
 
 
-      <div className="p-4 bg-surface flex justify-between items-center">
+      <div className="shrink-0 p-4 bg-surface flex justify-between items-center">
         <div className="flex-1">
           {publishError ? (
             <span className="text-diff-remove font-mono text-sm bg-diff-remove/10 px-2 py-1 rounded-sm">- {publishError}</span>
