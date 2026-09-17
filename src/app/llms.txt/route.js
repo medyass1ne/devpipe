@@ -5,6 +5,10 @@ export async function GET() {
 
 DevPipe is an open-source release-note pipeline for software maintainers. It converts a single markdown draft into platform-correct posts for GitHub Releases, Dev.to, Hashnode, and Reddit, removing the manual reformatting each platform otherwise requires due to differing markdown flavors, tag limits, and posting-API restrictions.
 
+## Resources
+- [Live Application](https://devpipe.yessindevs.me/)
+- [GitHub Repository](https://github.com/medyass1ne/devpipe)
+
 ## System Architecture
 
 - Frontend: Next.js (App Router), Tailwind CSS. Single application; no separate client/server repositories.
