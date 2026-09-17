@@ -4,14 +4,26 @@ import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProjectName, initialVersion, initialMasterContent }) {
+export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProjectName, initialVersion, initialMasterContent, initialReleaseType }) {
   const [projectName, setProjectName] = useState(initialProjectName || '');
   const [version, setVersion] = useState(initialVersion || '');
+  const [releaseType, setReleaseType] = useState(initialReleaseType || 'update');
   const [masterContent, setMasterContent] = useState(initialMasterContent || '');
   
   const [isSaving, setIsSaving] = useState(false);
   const [isTransforming, setIsTransforming] = useState(false);
   const [viewMode, setViewMode] = useState('code'); // 'code' or 'preview'
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    let timer;
+    if (cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
   
   // Keep local track of transformed content before saving
   const [transformedContent, setTransformedContent] = useState(null);
@@ -43,10 +55,11 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
       const payload = {
         projectName,
         version,
+        releaseType,
         masterContent,
       };
       if (releaseId) payload.id = releaseId;
-      if (transformedContent) payload.transformedContent = transformedContent;
+      if (transformedContent !== null) payload.transformedContent = transformedContent;
 
       const res = await fetch('/api/releases', {
         method: 'POST',
@@ -74,24 +87,60 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
       const res = await fetch('/api/transform', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectName, version, masterContent })
+        body: JSON.stringify({ projectName, version, releaseType, masterContent })
       });
       
       const data = await res.json();
       
-      if (res.ok && !data.error) {
+      if (res.status === 429 || (data && data.error && data.error.includes('Rate limit'))) {
+        setCooldown(60);
+        alert(data.error || 'Rate limit exceeded. Please wait a minute.');
+      } else if (res.ok && !data.error) {
         setTransformedContent(data);
+        setCooldown(60);
         
-        // Mock a release object to populate the preview tabs immediately before saving
-        if (onUpdateRelease) {
-          onUpdateRelease({
-             _id: releaseId,
-             projectName,
-             version,
-             masterContent,
-             transformedContent: data,
-             status: 'transformed'
+        try {
+          const autoSavePayload = {
+            projectName,
+            version,
+            releaseType,
+            masterContent,
+            transformedContent: data,
+          };
+          if (releaseId) autoSavePayload.id = releaseId;
+          
+          const autoSaveRes = await fetch('/api/releases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(autoSavePayload)
           });
+          const autoSaveJson = await autoSaveRes.json();
+          if (autoSaveJson.success && onUpdateRelease) {
+            onUpdateRelease(autoSaveJson.data);
+          } else if (onUpdateRelease) {
+            onUpdateRelease({
+               _id: releaseId,
+               projectName,
+               version,
+               releaseType,
+               masterContent,
+               transformedContent: data,
+               status: 'transformed'
+            });
+          }
+        } catch (e) {
+          console.error("Auto-save failed", e);
+          if (onUpdateRelease) {
+            onUpdateRelease({
+               _id: releaseId,
+               projectName,
+               version,
+               releaseType,
+               masterContent,
+               transformedContent: data,
+               status: 'transformed'
+            });
+          }
         }
       } else {
         alert("Transformation failed: " + (data.error?.message || data.error || "Unknown error"));
@@ -131,7 +180,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
             />
           )}
         </div>
-        <div className="w-1/3">
+        <div className="w-1/4">
           <label className="block font-mono text-xs text-text-muted mb-2">Version</label>
           <input 
             type="text" 
@@ -140,6 +189,24 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
             value={version}
             onChange={(e) => setVersion(e.target.value)}
           />
+        </div>
+        <div className="w-1/3">
+          <label className="block font-mono text-xs text-text-muted mb-2">Release Type</label>
+          <div className="flex border border-surface-raised rounded-sm overflow-hidden text-sm font-mono">
+            <button 
+              onClick={() => setReleaseType('update')}
+              className={`flex-1 py-1.5 transition ${releaseType === 'update' ? 'bg-surface text-accent' : 'bg-transparent text-text-muted hover:bg-surface/50'}`}
+            >
+              update
+            </button>
+            <div className="w-px bg-surface-raised"></div>
+            <button 
+              onClick={() => setReleaseType('first_release')}
+              className={`flex-1 py-1.5 transition ${releaseType === 'first_release' ? 'bg-surface text-accent' : 'bg-transparent text-text-muted hover:bg-surface/50'}`}
+            >
+              first_release
+            </button>
+          </div>
         </div>
       </div>
 
@@ -210,10 +277,14 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
         </button>
         <button 
           onClick={handleTransform}
-          disabled={isTransforming || isSaving}
-          className="px-4 py-2 bg-accent text-ink font-mono font-bold text-sm hover:bg-opacity-90 transition rounded-sm disabled:opacity-50"
+          disabled={isTransforming || isSaving || cooldown > 0}
+          className={`px-4 py-2 font-mono font-bold text-sm transition rounded-sm disabled:opacity-50 ${
+            cooldown > 0 
+              ? 'bg-surface text-text-muted cursor-not-allowed border border-surface-raised' 
+              : 'bg-accent text-ink hover:bg-opacity-90'
+          }`}
         >
-          {isTransforming ? 'transforming...' : 'transform'}
+          {cooldown > 0 ? `cooldown... [${cooldown}s]` : isTransforming ? 'transforming...' : 'transform'}
         </button>
       </div>
     </div>

@@ -6,6 +6,10 @@ export const POST = defineRoute({
   params: z.object({
     id: z.string()
   }),
+  body: z.object({
+    target: z.enum(['all', 'github', 'devto']).default('all'),
+    transformedContent: z.any().optional()
+  }).optional().default({ target: 'all' }),
   handler: async (ctx) => {
     const session = await getServerSession(authOptions);
     if (!session || !session.user || !session.user.id) {
@@ -22,105 +26,113 @@ export const POST = defineRoute({
     const { transformedContent, projectName, version } = release;
     const tokens = user.tokens || {};
 
+    const payload = ctx.body || { target: 'all' };
+    const target = payload.target;
+    const tc = payload.transformedContent || release.transformedContent;
+
     const dispatchGitHub = async () => {
-      if (!transformedContent?.github) return { status: 'skipped' };
-      if (!user.githubAccessToken || !user.githubUsername) return { status: 'failed', error: 'Missing GitHub tokens' };
+      if (target !== 'all' && target !== 'github') return { status: 'skipped' };
+      if (!tc?.github) return { status: 'skipped' };
+      if (!session.accessToken || !session.githubUsername) return { status: 'failed', error: 'Missing GitHub tokens in session' };
       
-      const res = await fetch(`https://api.github.com/repos/${user.githubUsername}/${projectName}/releases`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${user.githubAccessToken}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          tag_name: version,
-          name: version,
-          body: transformedContent.github
-        })
-      });
-      
-      const data = await res.json();
-      if (!res.ok) return { status: 'failed', error: data.message || 'GitHub API Error' };
-      return { status: 'published', url: data.html_url };
+      try {
+        const githubUrl = 'https://api.github.com/repos/' + session.githubUsername + '/' + projectName + '/releases';
+        const res = await fetch(githubUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.accessToken}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            tag_name: version,
+            name: tc.github.title || version,
+            body: tc.github.content || ''
+          })
+        });
+        
+        if (!res.ok) {
+          const text = await res.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(text);
+          } catch (e) {
+            console.error('GitHub HTML/Text Error:', text);
+            return { status: 'failed', error: 'GitHub API returned invalid response format' };
+          }
+          console.error('GitHub 422 Error:', JSON.stringify(errorData, null, 2));
+          const errMsg = errorData.errors?.[0]?.code || errorData.message || 'GitHub API Error';
+          return { status: 'failed', error: errMsg };
+        }
+        
+        const data = await res.json();
+        return { status: 'published', url: data.html_url };
+      } catch (err) {
+        console.error('GitHub Dispatch Error:', err);
+        return { status: 'failed', error: err.message };
+      }
     };
 
     const dispatchDevTo = async () => {
-      if (!transformedContent?.devto) return { status: 'skipped' };
+      if (target !== 'all' && target !== 'devto') return { status: 'skipped' };
+      if (!tc?.devto) return { status: 'skipped' };
       if (!tokens.devtoKey) return { status: 'failed', error: 'Missing Dev.to API Key' };
 
-      const res = await fetch('https://dev.to/api/articles', {
-        method: 'POST',
-        headers: {
-          'api-key': tokens.devtoKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          article: {
-            title: `${projectName} ${version} Release Notes`,
-            body_markdown: transformedContent.devto,
-            published: true
-          }
-        })
-      });
+      try {
+        let parsedTags = [];
+        if (typeof tc.devto.tags === 'string') {
+          parsedTags = tc.devto.tags.split(',').map(t => t.trim().replace(/[^a-zA-Z0-9]/g, '')).filter(Boolean).slice(0, 4);
+        } else if (Array.isArray(tc.devto.tags)) {
+          parsedTags = tc.devto.tags.map(t => typeof t === 'string' ? t.trim().replace(/[^a-zA-Z0-9]/g, '') : '').filter(Boolean).slice(0, 4);
+        }
 
-      const data = await res.json();
-      if (!res.ok) return { status: 'failed', error: data.error || 'Dev.to API Error' };
-      return { status: 'published', url: data.url };
-    };
-
-    const dispatchHashnode = async () => {
-      if (!transformedContent?.hashnode) return { status: 'skipped' };
-      if (!tokens.hashnodeKey) return { status: 'failed', error: 'Missing Hashnode Token' };
-
-      // 1. Fetch Publication ID
-      const meRes = await fetch('https://gql.hashnode.com/', {
-        method: 'POST',
-        headers: { 'Authorization': tokens.hashnodeKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: `query { me { publications(first: 1) { edges { node { id } } } } }`
-        })
-      });
-      const meData = await meRes.json();
-      const pubId = meData.data?.me?.publications?.edges?.[0]?.node?.id;
-      if (!pubId) return { status: 'failed', error: 'Could not find a Hashnode publication.' };
-
-      // 2. Publish Post
-      const publishRes = await fetch('https://gql.hashnode.com/', {
-        method: 'POST',
-        headers: { 'Authorization': tokens.hashnodeKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: `mutation PublishPost($input: PublishPostInput!) { publishPost(input: $input) { post { url } } }`,
-          variables: {
-            input: {
-              title: `${projectName} ${version} Release Notes`,
-              contentMarkdown: transformedContent.hashnode,
-              publicationId: pubId
+        const res = await fetch('https://dev.to/api/articles', {
+          method: 'POST',
+          headers: {
+            'api-key': tokens.devtoKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            article: {
+              title: tc.devto.title || `${projectName} ${version} Release Notes`,
+              body_markdown: tc.devto.content || '',
+              tags: parsedTags,
+              published: true
             }
-          }
-        })
-      });
-      
-      const publishData = await publishRes.json();
-      if (publishData.errors) return { status: 'failed', error: publishData.errors[0].message };
-      return { status: 'published', url: publishData.data?.publishPost?.post?.url };
-    };
+          })
+        });
 
-    const dispatchReddit = async () => {
-      return { status: 'pending_auth' };
+        if (!res.ok) {
+          const text = await res.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(text);
+          } catch (e) {
+            console.error('Dev.to HTML/Text Error:', text);
+            return { status: 'failed', error: 'Dev.to API returned invalid response format' };
+          }
+          console.error('Dev.to API Error:', JSON.stringify(errorData, null, 2));
+          return { status: 'failed', error: errorData.error || 'Dev.to API Error' };
+        }
+        
+        const data = await res.json();
+        return { status: 'published', url: data.url };
+      } catch (err) {
+        console.error('Dev.to Dispatch Error:', err);
+        return { status: 'failed', error: err.message };
+      }
     };
 
     // Run all dispatches concurrently
-    const [githubResult, devtoResult, hashnodeResult, redditResult] = await Promise.allSettled([
+    const [githubResult, devtoResult] = await Promise.allSettled([
       dispatchGitHub(),
-      dispatchDevTo(),
-      dispatchHashnode(),
-      dispatchReddit()
+      dispatchDevTo()
     ]);
 
     const updateState = (platform, resultObj) => {
       if (resultObj.status === 'fulfilled') {
         const val = resultObj.value;
+        if (val.status === 'skipped') return;
         if (val.status === 'published') {
           release.publishStates[platform] = { status: 'published', url: val.url, error: null };
         } else if (val.status === 'failed') {
@@ -134,8 +146,6 @@ export const POST = defineRoute({
     if (!release.publishStates) release.publishStates = {};
     updateState('github', githubResult);
     updateState('devto', devtoResult);
-    updateState('hashnode', hashnodeResult);
-    updateState('reddit', redditResult);
 
     await release.save();
     return { success: true, data: release };

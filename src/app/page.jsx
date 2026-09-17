@@ -2,8 +2,16 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { getSession, signOut } from 'next-auth/react';
 
 export default function LandingPage() {
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    getSession().then(setSession);
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -48,12 +56,24 @@ export default function LandingPage() {
             </a>
           </nav>
         </div>
-        <Link 
-          href="/login"
-          className="px-6 py-2 bg-surface-raised border border-surface-raised hover:border-accent text-text-main font-mono text-sm transition rounded-sm"
-        >
-          login
-        </Link>
+        {session ? (
+          <div className="flex items-center space-x-6">
+            <Link href="/dashboard" className="font-mono text-sm text-text-main hover:text-accent transition">dashboard</Link>
+            <button 
+              onClick={() => signOut()}
+              className="px-6 py-2 bg-surface border border-surface hover:border-diff-remove text-text-main hover:text-diff-remove font-mono text-sm transition rounded-sm"
+            >
+              logout
+            </button>
+          </div>
+        ) : (
+          <Link 
+            href="/login"
+            className="px-6 py-2 bg-surface-raised border border-surface-raised hover:border-accent text-text-main font-mono text-sm transition rounded-sm"
+          >
+            login
+          </Link>
+        )}
       </header>
 
       <main className="flex-1 flex flex-col items-center">
@@ -266,11 +286,11 @@ export default function LandingPage() {
               <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">Status</Link>
             </div>
             
-            <div className="flex flex-col space-y-4">
+            {/* <div className="flex flex-col space-y-4">
               <h4 className="font-mono text-text-main font-bold text-sm">Company</h4>
               <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">About</Link>
               <Link href="#" className="font-mono text-xs text-text-muted hover:text-text-main transition">Contact</Link>
-            </div>
+            </div> */}
           </div>
           
           <div className="flex justify-between items-center pt-8 border-t border-surface-raised font-mono text-xs text-text-muted">

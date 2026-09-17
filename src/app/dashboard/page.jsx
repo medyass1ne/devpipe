@@ -10,7 +10,7 @@ export default function DraftsListView() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/releases')
+    fetch('/api/releases', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (data.success) {

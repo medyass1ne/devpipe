@@ -18,7 +18,7 @@ const { defineRoute } = createBro({
   },
 
   // Rate limiting configuration.
-  rateLimit: { windowMs: 10000, max: 5 }, // Allow five requests per client during each ten-second window.
+  // rateLimit: { windowMs: 10000, max: 5 }, // Allow five requests per client during each ten-second window.
 
   // Optional database connection. Uncomment and install mongoose when needed.
   db: async () => {

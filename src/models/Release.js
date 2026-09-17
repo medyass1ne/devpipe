@@ -10,12 +10,27 @@ const ReleaseSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   projectName: { type: String, required: true },
   version: { type: String, required: true },
+  releaseType: { type: String, enum: ['first_release', 'update'], default: 'update' },
   masterContent: { type: String, required: true },
   transformedContent: {
-    github: { type: String, default: null },
-    devto: { type: String, default: null },
-    hashnode: { type: String, default: null },
-    reddit: { type: String, default: null }
+    github: { 
+      title: { type: String, default: null },
+      content: { type: String, default: null }
+    },
+    devto: { 
+      title: { type: String, default: null },
+      tags: { type: [String], default: [] },
+      content: { type: String, default: null }
+    },
+    hashnode: { 
+      title: { type: String, default: null },
+      tags: { type: [String], default: [] },
+      content: { type: String, default: null }
+    },
+    reddit: { 
+      title: { type: String, default: null },
+      content: { type: String, default: null }
+    }
   },
   publishStates: {
     github: { type: PlatformStateSchema, default: () => ({}) },

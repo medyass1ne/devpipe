@@ -27,7 +27,7 @@ export const authOptions = {
               githubUsername: profile.login,
               githubAccessToken: account.access_token 
             },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
           );
           user.mongoId = existingUser._id.toString();
           return true;
@@ -38,7 +38,7 @@ export const authOptions = {
       }
       return true;
     },
-    async jwt({ token, user, profile }) {
+    async jwt({ token, user, account, profile }) {
       if (user?.mongoId) {
         token.mongoId = user.mongoId;
       } else if (profile) {
@@ -46,12 +46,18 @@ export const authOptions = {
         const dbUser = await User.findOne({ githubId: profile.id.toString() });
         if (dbUser) token.mongoId = dbUser._id.toString();
       }
+      if (account && profile) {
+        token.accessToken = account.access_token;
+        token.githubUsername = profile.login;
+      }
       return token;
     },
     async session({ session, token }) {
       if (token?.mongoId) {
         session.user.id = token.mongoId;
       }
+      session.accessToken = token.accessToken;
+      session.githubUsername = token.githubUsername;
       return session;
     }
   },

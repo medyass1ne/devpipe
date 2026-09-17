@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -8,6 +8,10 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
   const [activeTab, setActiveTab] = useState('github');
   const [viewMode, setViewMode] = useState('code'); // 'code' or 'preview'
   const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState(null);
+  const [copiedStates, setCopiedStates] = useState({ reddit: false, hashnode: false });
+  const [tagsInput, setTagsInput] = useState('');
+
   
   // The new schema uses release.transformedContent instead of platformStates
   if (!release || !release.transformedContent || Object.keys(release.transformedContent).length === 0) {
@@ -19,26 +23,83 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
   }
 
   const platforms = ['github', 'devto', 'hashnode', 'reddit'];
-  const content = release.transformedContent[activeTab];
+  const platformData = release.transformedContent[activeTab] || {};
+  
+  // Sync tags input when tab changes
+  useEffect(() => {
+    setTagsInput((platformData.tags || []).join(', '));
+  }, [activeTab, release?.transformedContent]);
+
+  const handleTagsChange = (e) => {
+    setTagsInput(e.target.value);
+    const newTags = e.target.value.split(',').map(t => t.trim()).filter(Boolean);
+    if (onUpdateRelease) {
+      onUpdateRelease({
+        ...release,
+        transformedContent: {
+          ...release.transformedContent,
+          [activeTab]: { ...release.transformedContent[activeTab], tags: newTags }
+        }
+      });
+    }
+  };
   const publishStates = release.publishStates || {};
   const activeState = publishStates[activeTab] || {};
   const status = release.status || 'draft';
 
-  const handlePublish = async () => {
+  const handlePublish = async (target) => {
     if (!release._id) return;
     setIsPublishing(true);
+    setPublishError(null);
     try {
-      const res = await fetch(`/api/releases/${release._id}/publish`, { method: 'POST' });
+      const res = await fetch(`/api/releases/${release._id}/publish`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target, transformedContent: release.transformedContent })
+      });
       const data = await res.json();
       if (res.ok && data.success) {
-        if (onUpdateRelease) onUpdateRelease(data.data);
+        if (onUpdateRelease) {
+          onUpdateRelease({
+            ...data.data,
+            transformedContent: release.transformedContent // Prevent state wipe bug
+          });
+        }
       } else {
-        alert(data.error || 'Failed to publish');
+        const errMsg = data.error || 'Failed to publish';
+        console.error("Publish API Error:", errMsg);
+        setPublishError(errMsg);
+        setTimeout(() => setPublishError(null), 5000);
       }
     } catch (e) {
-      alert('Network error while publishing');
+      console.error("Network error while publishing:", e);
+      setPublishError('Network error while publishing');
+      setTimeout(() => setPublishError(null), 5000);
     }
     setIsPublishing(false);
+  };
+
+  const handleCopyAndOpen = async (platform) => {
+    try {
+      const pData = release?.transformedContent?.[platform] || {};
+      const mdContent = pData.content || '';
+      await navigator.clipboard.writeText(mdContent);
+      setCopiedStates(prev => ({ ...prev, [platform]: true }));
+      if (platform === 'reddit') {
+        const title = pData.title || '';
+        const redditUrl = 'https://www.reddit.com/submit?title=' + encodeURIComponent(title) + '&selftext=true&text=' + encodeURIComponent(mdContent);
+        window.open(redditUrl, '_blank');
+      } else if (platform === 'hashnode') {
+        window.open('https://hashnode.com/draft', '_blank');
+      }
+      setTimeout(() => {
+         setCopiedStates(prev => ({ ...prev, [platform]: false }));
+      }, 5000);
+    } catch (e) {
+      console.error("Clipboard error:", e);
+      setPublishError("Failed to copy to clipboard");
+      setTimeout(() => setPublishError(null), 5000);
+    }
   };
 
   // Status pill as diff marker
@@ -57,7 +118,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
       <div className="p-3 border-b border-surface-raised bg-ink flex justify-between items-center">
         <span className="font-mono text-xs text-text-muted">Syndication</span>
         <button 
-          onClick={handlePublish}
+          onClick={() => handlePublish('all')}
           disabled={isPublishing || !release._id || status !== 'transformed'}
           className="px-4 py-1.5 font-mono text-xs transition rounded-sm border border-accent text-accent hover:bg-accent hover:text-ink disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -88,6 +149,44 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
         })}
       </div>
 
+      {/* Metadata Bar */}
+      <div className="flex flex-col p-4 border-b border-surface-raised bg-ink space-y-3">
+        <div className="flex items-center space-x-2">
+          <label className="font-mono text-xs text-text-muted w-12">Title:</label>
+          <input 
+            type="text"
+            value={platformData.title || ''}
+            onChange={(e) => {
+              if (onUpdateRelease) {
+                onUpdateRelease({
+                  ...release,
+                  transformedContent: {
+                    ...release.transformedContent,
+                    [activeTab]: { ...release.transformedContent[activeTab], title: e.target.value }
+                  }
+                });
+              }
+            }}
+            className="flex-1 bg-surface border border-surface-raised px-2 py-1 text-sm font-mono text-text-main focus:outline-none focus:border-accent rounded-sm"
+          />
+        </div>
+        {(activeTab === 'devto' || activeTab === 'hashnode') && (
+          <div className="flex items-center space-x-2">
+            <label className="font-mono text-xs text-text-muted w-12">Tags:</label>
+            <input 
+              type="text"
+              value={tagsInput}
+              onChange={handleTagsChange}
+              placeholder="javascript, react, webdev"
+              className="flex-1 bg-surface border border-surface-raised px-2 py-1 text-sm font-mono text-text-main focus:outline-none focus:border-accent rounded-sm"
+            />
+            {activeTab === 'devto' && (
+              <span className="font-mono text-xs text-text-muted whitespace-nowrap">max 4 tags</span>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Content */}
       <div className="flex-1 p-0 overflow-auto bg-ink border-b border-surface-raised relative min-h-[300px]">
         {/* Toggle */}
@@ -107,7 +206,9 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
         </div>
 
         <div className="absolute top-10 right-0 p-2 z-10 text-xs font-mono">
-           {activeState.status === 'published' ? (
+           {copiedStates[activeTab] ? (
+             <span className="text-diff-add bg-diff-add/10 px-2 py-0.5">+ copied</span>
+           ) : activeState.status === 'published' ? (
              <span className="text-diff-add bg-diff-add/10 px-2 py-0.5">+ published</span>
            ) : activeState.status === 'failed' ? (
              <span className="text-diff-remove bg-diff-remove/10 px-2 py-0.5">- failed</span>
@@ -115,9 +216,21 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
         </div>
 
         {viewMode === 'code' ? (
-          <div className="p-4 pt-12 text-sm font-mono whitespace-pre-wrap text-text-main h-full">
-            {content || '// No output'}
-          </div>
+          <textarea 
+            className="w-full bg-ink border-0 p-4 pt-12 text-sm font-mono text-text-main focus:outline-none resize-none h-full"
+            value={platformData.content || ''}
+            onChange={(e) => {
+              if (onUpdateRelease) {
+                onUpdateRelease({
+                  ...release,
+                  transformedContent: {
+                    ...release.transformedContent,
+                    [activeTab]: { ...release.transformedContent[activeTab], content: e.target.value }
+                  }
+                });
+              }
+            }}
+          />
         ) : (
           <div className="p-6 pt-12 overflow-auto h-full w-full">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
@@ -132,7 +245,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
               blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-accent pl-4 italic text-text-muted mb-4" {...props} />,
               a: ({node, ...props}) => <a className="text-accent underline hover:no-underline" {...props} />
             }}>
-              {content || '*No output*'}
+              {platformData.content || '*No output*'}
             </ReactMarkdown>
           </div>
         )}
@@ -141,7 +254,9 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
       {/* Footer */}
       <div className="p-4 bg-surface flex justify-between items-center">
         <div className="flex-1">
-          {activeState.status === 'published' && activeState.url ? (
+          {publishError ? (
+            <span className="text-diff-remove font-mono text-sm bg-diff-remove/10 px-2 py-1 rounded-sm">- {publishError}</span>
+          ) : activeState.status === 'published' && activeState.url ? (
             <a href={activeState.url} target="_blank" rel="noreferrer" className="text-diff-add font-mono text-sm hover:underline flex items-center space-x-2">
               <span>+ published: {activeState.url}</span>
             </a>
@@ -152,9 +267,16 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
           ) : null}
         </div>
         
-        {activeState.status !== 'published' && (
+        {activeTab === 'reddit' || activeTab === 'hashnode' ? (
           <button 
-            onClick={handlePublish}
+            onClick={() => handleCopyAndOpen(activeTab)}
+            className="px-4 py-2 font-mono text-sm transition rounded-sm border border-accent text-accent hover:bg-accent hover:text-ink bg-ink"
+          >
+            copy & open {activeTab}
+          </button>
+        ) : activeState.status !== 'published' && (
+          <button 
+            onClick={() => handlePublish(activeTab)}
             disabled={isPublishing || !release._id || status !== 'transformed'}
             className={`px-4 py-2 font-mono text-sm transition rounded-sm border ${
               isPublishing || !release._id || status !== 'transformed'

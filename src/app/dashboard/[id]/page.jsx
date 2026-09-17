@@ -13,7 +13,7 @@ export default function EditDraftPage() {
 
   useEffect(() => {
     // Fetch the specific release
-    fetch('/api/releases')
+    fetch('/api/releases', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -63,6 +63,7 @@ export default function EditDraftPage() {
             onUpdateRelease={handleUpdateRelease} 
             initialProjectName={release.projectName} 
             initialVersion={release.version}
+            initialReleaseType={release.releaseType}
             initialMasterContent={release.masterContent}
           />
         </div>

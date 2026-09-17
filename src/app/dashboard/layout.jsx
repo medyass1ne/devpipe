@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import SidebarNav from '@/components/SidebarNav';
+import LogoutButton from '@/components/LogoutButton';
 
 export default async function DashboardLayout({ children }) {
   const session = await getServerSession(authOptions);
@@ -25,8 +26,9 @@ export default async function DashboardLayout({ children }) {
                 {session?.user?.name?.[0]?.toUpperCase() || 'G'}
               </div>
             )}
-            <div>
-              <p className="text-sm font-bold truncate max-w-[150px]">{session?.user?.name || 'Guest User'}</p>
+            <div className="flex-1 flex items-center justify-between">
+              <p className="text-sm font-bold truncate max-w-[120px]">{session?.user?.name || 'Guest User'}</p>
+              {session?.user && <LogoutButton />}
             </div>
           </div>
         </div>
