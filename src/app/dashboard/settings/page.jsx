@@ -7,8 +7,6 @@ export default function SettingsPage() {
   const [email, setEmail] = useState('');
   
   useEffect(() => {
-    // In a real app we'd fetch the user's details from NextAuth session or API.
-    // Setting defaults to match requested professional branding.
     fetch('/api/auth/session')
       .then(res => res.json())
       .then(data => {
@@ -25,7 +23,7 @@ export default function SettingsPage() {
         <h1 className="text-xl font-mono text-text-main lowercase">~/settings</h1>
       </div>
 
-      {/* Profile Section */}
+
       <section className="space-y-6">
         <h2 className="text-lg font-mono font-bold text-text-main">Profile</h2>
         <div className="space-y-4">
@@ -54,7 +52,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Danger Zone */}
+
       <section className="space-y-6 pt-6 border-t border-surface-raised">
         <h2 className="text-lg font-mono font-bold text-diff-remove">Danger Zone</h2>
         <div className="bg-ink border border-diff-remove/30 rounded-sm p-6 flex items-center justify-between">

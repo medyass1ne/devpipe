@@ -6,14 +6,25 @@ import remarkGfm from 'remark-gfm';
 
 export default function PlatformPreview({ release, onUpdateRelease, isTransforming }) {
   const [activeTab, setActiveTab] = useState('github');
-  const [viewMode, setViewMode] = useState('code'); // 'code' or 'preview'
+  const [viewMode, setViewMode] = useState('code'); // 'code' || 'preview'
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState(null);
   const [copiedStates, setCopiedStates] = useState({ reddit: false, hashnode: false });
   const [tagsInput, setTagsInput] = useState('');
+  const [connections, setConnections] = useState({});
+
+  useEffect(() => {
+    fetch('/api/user/connections')
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) {
+          setConnections(data);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   
-  // The new schema uses release.transformedContent instead of platformStates
   if (!release || !release.transformedContent || Object.keys(release.transformedContent).length === 0) {
     return (
       <div className="bg-surface border border-surface-raised flex-1 flex items-center justify-center text-text-muted font-mono text-sm rounded-sm p-4 text-center min-h-[300px]">
@@ -25,7 +36,6 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
   const platforms = ['github', 'devto', 'hashnode', 'reddit'];
   const platformData = release.transformedContent[activeTab] || {};
   
-  // Sync tags input when tab changes
   useEffect(() => {
     setTagsInput((platformData.tags || []).join(', '));
   }, [activeTab, release?.transformedContent]);
@@ -62,7 +72,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
         if (onUpdateRelease) {
           onUpdateRelease({
             ...data.data,
-            transformedContent: release.transformedContent // Prevent state wipe bug
+            transformedContent: release.transformedContent
           });
         }
       } else {
@@ -102,7 +112,6 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
     }
   };
 
-  // Status pill as diff marker
   const getStatusMarker = (status) => {
     switch (status) {
       case 'published': return <span className="text-diff-add bg-diff-add/10 px-2 py-0.5">+ published</span>;
@@ -114,7 +123,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
 
   return (
     <div className={`bg-surface border border-surface-raised flex flex-col flex-1 rounded-sm ${isTransforming ? 'opacity-50' : 'opacity-100'} transition-opacity duration-300 min-h-[300px] overflow-hidden`}>
-      {/* Top Bar with Publish All */}
+
       <div className="p-3 border-b border-surface-raised bg-ink flex justify-between items-center">
         <span className="font-mono text-xs text-text-muted">Syndication</span>
         <button 
@@ -126,7 +135,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
         </button>
       </div>
 
-      {/* Tabs */}
+
       <div className="flex border-b border-surface-raised bg-surface">
         {platforms.map(platform => {
           const isActive = activeTab === platform;
@@ -149,7 +158,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
         })}
       </div>
 
-      {/* Metadata Bar */}
+
       <div className="flex flex-col p-4 border-b border-surface-raised bg-ink space-y-3">
         <div className="flex items-center space-x-2">
           <label className="font-mono text-xs text-text-muted w-12">Title:</label>
@@ -185,11 +194,33 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
             )}
           </div>
         )}
+        {activeTab === 'reddit' && connections.reddit && (
+          <div className="flex items-center space-x-2">
+            <label className="font-mono text-xs text-text-muted w-12">Subreddit:</label>
+            <input 
+              type="text"
+              value={platformData.subreddit || ''}
+              onChange={(e) => {
+                if (onUpdateRelease) {
+                  onUpdateRelease({
+                    ...release,
+                    transformedContent: {
+                      ...release.transformedContent,
+                      [activeTab]: { ...release.transformedContent[activeTab], subreddit: e.target.value }
+                    }
+                  });
+                }
+              }}
+              placeholder="r/node"
+              className="flex-1 bg-surface border border-surface-raised px-2 py-1 text-sm font-mono text-text-main focus:outline-none focus:border-accent rounded-sm"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Content */}
+
       <div className="flex-1 p-0 overflow-auto bg-ink border-b border-surface-raised relative min-h-[300px]">
-        {/* Toggle */}
+
         <div className="absolute top-2 right-4 z-10 flex space-x-1">
           <button 
             onClick={() => setViewMode('code')}
@@ -251,7 +282,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
         )}
       </div>
 
-      {/* Footer */}
+
       <div className="p-4 bg-surface flex justify-between items-center">
         <div className="flex-1">
           {publishError ? (
@@ -267,7 +298,7 @@ export default function PlatformPreview({ release, onUpdateRelease, isTransformi
           ) : null}
         </div>
         
-        {activeTab === 'reddit' || activeTab === 'hashnode' ? (
+        {(!connections[activeTab] && (activeTab === 'reddit' || activeTab === 'hashnode')) ? (
           <button 
             onClick={() => handleCopyAndOpen(activeTab)}
             className="px-4 py-2 font-mono text-sm transition rounded-sm border border-accent text-accent hover:bg-accent hover:text-ink bg-ink"

@@ -40,7 +40,7 @@ export default function LandingPage() {
         }
       `}} />
 
-      {/* 1. NAVBAR */}
+
       <header className="flex items-center justify-between p-6 border-b border-surface-raised max-w-7xl mx-auto w-full">
         <div className="flex items-center space-x-8">
           <div className="text-xl font-bold font-sans text-text-main tracking-tight uppercase">
@@ -78,7 +78,7 @@ export default function LandingPage() {
 
       <main className="flex-1 flex flex-col items-center">
         
-        {/* HERO SECTION */}
+
         <section className="w-full flex flex-col items-center justify-center p-6 pt-8 pb-32">
           <motion.div 
             className="text-center max-w-2xl w-full mb-12"
@@ -100,14 +100,14 @@ export default function LandingPage() {
             </motion.p>
           </motion.div>
 
-          {/* CLI Animation */}
+
           <motion.div 
             className="w-full max-w-3xl bg-surface border border-surface-raised rounded-sm p-6 md:p-8 font-mono text-sm md:text-base relative overflow-hidden mb-12 text-left h-auto min-h-[240px]"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
-            {/* Window Controls */}
+
             <div className="flex space-x-2 absolute top-4 left-4">
               <div className="w-3 h-3 rounded-full bg-diff-remove"></div>
               <div className="w-3 h-3 rounded-full bg-diff-neutral"></div>
@@ -151,7 +151,7 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          {/* CTA */}
+
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -166,13 +166,13 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* 2. HOW IT WORKS */}
+
         <section id="features" className="w-full max-w-5xl mx-auto px-6 pb-32">
           <div className="grid grid-cols-1 md:grid-cols-3 relative">
-            {/* Background Spoke Line */}
+
             <div className="hidden md:block absolute top-[11px] left-0 right-0 h-[1px] bg-text-muted/30 -z-10"></div>
             
-            {/* Stage 1 */}
+
             <div className="flex flex-col items-center text-center p-6 pt-0">
               <div className="w-6 h-6 rounded-full bg-ink border border-text-muted/30 mb-8 relative flex justify-center items-center">
                  <div className="w-1.5 h-1.5 rounded-full bg-text-muted"></div>
@@ -183,7 +183,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Stage 2 */}
+
             <div className="flex flex-col items-center text-center p-6 pt-0">
               <div className="w-6 h-6 rounded-full bg-ink border border-text-muted/30 mb-8 relative flex justify-center items-center">
                  <div className="w-1.5 h-1.5 rounded-full bg-text-muted"></div>
@@ -194,7 +194,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Stage 3 */}
+
             <div className="flex flex-col items-center text-center p-6 pt-0">
               <div className="w-6 h-6 rounded-full bg-ink border border-text-muted/30 mb-8 relative flex justify-center items-center">
                  <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
@@ -207,10 +207,10 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 3. PLATFORM SUPPORT ROW */}
+
         <section className="w-full max-w-2xl mx-auto px-6 pb-32">
           <div className="relative flex justify-between items-center mb-8">
-            {/* Green Spoke Line */}
+
             <div className="absolute top-[5px] left-8 right-8 h-[1px] bg-diff-add/30 -z-10"></div>
             
             {['github', 'dev.to', 'hashnode', 'reddit'].map((plat) => (
@@ -225,7 +225,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 4. BEFORE/AFTER DIFF BLOCK */}
+
         <section className="w-full max-w-4xl mx-auto px-6 pb-32">
           <div className="bg-surface border border-surface-raised rounded-sm overflow-hidden font-mono text-sm md:text-base">
             <div className="p-4 border-b border-surface-raised bg-ink">
@@ -233,13 +233,13 @@ export default function LandingPage() {
             </div>
             
             <div className="flex flex-col">
-              {/* Old Workflow */}
+
               <div className="bg-diff-remove/10 text-diff-remove px-6 py-4 flex flex-col space-y-2 border-b border-surface-raised">
                 <div>- 4 tabs open, 4 different formats, 4 chances to forget one</div>
                 <div>- copy-pasting the same changelog by hand, every time</div>
               </div>
               
-              {/* New Workflow */}
+
               <div className="bg-diff-add/10 text-diff-add px-6 py-4 flex flex-col space-y-2">
                 <div>+ one markdown file</div>
                 <div>+ one command, four platforms, correctly formatted</div>
@@ -248,7 +248,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 5. PROOF STRIP */}
+
         <section className="w-full border-y border-surface-raised bg-surface py-6 px-6">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between font-mono text-sm space-y-4 md:space-y-0">
             <div className="flex space-x-8 text-text-main">
@@ -262,7 +262,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* 6. FOOTER */}
+
       <footer className="w-full bg-ink border-t border-surface-raised px-6 pt-16 pb-12 mt-auto">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">

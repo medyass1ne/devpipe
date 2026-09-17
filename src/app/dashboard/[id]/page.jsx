@@ -46,7 +46,7 @@ export default function EditDraftPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 flex flex-col h-full">
-      {/* Header */}
+
       <div className="flex items-center justify-between mb-2 flex-shrink-0 border-b border-surface-raised pb-4">
         <div>
           <h1 className="text-xl font-mono text-text-main">
@@ -55,7 +55,7 @@ export default function EditDraftPage() {
         </div>
       </div>
       
-      {/* 60/40 Split */}
+
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 pb-6">
         <div className="w-full lg:w-[60%] flex flex-col min-h-[400px]">
           <ReleaseEditor 

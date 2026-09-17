@@ -41,6 +41,5 @@ const ReleaseSchema = new mongoose.Schema({
   status: { type: String, enum: ['draft', 'transformed', 'published'], default: 'draft' }
 }, { timestamps: true });
 
-// Delete the cached model to ensure hot-reloads apply the new schema
 delete mongoose.models.Release;
 export default mongoose.model('Release', ReleaseSchema);

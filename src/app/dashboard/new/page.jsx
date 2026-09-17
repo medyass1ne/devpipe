@@ -11,7 +11,6 @@ export default function NewDraftPage() {
 
   const handleUpdateRelease = (updatedRelease) => {
     setRelease(updatedRelease);
-    // After creating a new draft, we should redirect to the edit page to avoid creating duplicates on subsequent saves
     if (!release && updatedRelease._id) {
       router.push(`/dashboard/${updatedRelease._id}`);
     }
@@ -19,7 +18,7 @@ export default function NewDraftPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 flex flex-col h-full">
-      {/* Header */}
+
       <div className="flex items-center justify-between mb-2 flex-shrink-0 border-b border-surface-raised pb-4">
         <div>
           <h1 className="text-xl font-mono text-text-main">
@@ -28,7 +27,7 @@ export default function NewDraftPage() {
         </div>
       </div>
       
-      {/* 60/40 Split */}
+
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 pb-6">
         <div className="w-full lg:w-[60%] flex flex-col min-h-[400px]">
           <ReleaseEditor 

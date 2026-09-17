@@ -29,7 +29,6 @@ export async function GET(request) {
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
   try {
-    // Exchange code for tokens
     const tokenRes = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
@@ -52,7 +51,6 @@ export async function GET(request) {
 
     const { access_token, refresh_token } = tokenData;
 
-    // Fetch user info from Reddit
     const userRes = await fetch('https://oauth.reddit.com/api/v1/me', {
       headers: {
         'Authorization': `Bearer ${access_token}`,
@@ -63,7 +61,6 @@ export async function GET(request) {
     const userData = await userRes.json();
     const redditUsername = userData.name;
 
-    // Update MongoDB
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(process.env.MONGO_URI);
     }

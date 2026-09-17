@@ -7,7 +7,7 @@ export const POST = defineRoute({
     id: z.string()
   }),
   body: z.object({
-    target: z.enum(['all', 'github', 'devto']).default('all'),
+    target: z.enum(['all', 'github', 'devto', 'hashnode', 'reddit']).default('all'),
     transformedContent: z.any().optional()
   }).optional().default({ target: 'all' }),
   handler: async (ctx) => {
@@ -123,10 +123,141 @@ export const POST = defineRoute({
       }
     };
 
-    // Run all dispatches concurrently
-    const [githubResult, devtoResult] = await Promise.allSettled([
+    const dispatchReddit = async () => {
+      if (target !== 'all' && target !== 'reddit') return { status: 'skipped' };
+      if (!tc?.reddit) return { status: 'skipped' };
+      if (!tokens.redditAccessToken) return { status: 'failed', error: 'Missing Reddit Access Token' };
+
+      const subreddit = tc.reddit.subreddit || payload.subreddit || '';
+      if (!subreddit) return { status: 'failed', error: 'Missing Subreddit' };
+
+      try {
+        const formData = new URLSearchParams();
+        formData.append('title', tc.reddit.title || `${projectName} ${version} Release Notes`);
+        formData.append('text', tc.reddit.content || '');
+        formData.append('sr', subreddit.replace('r/', ''));
+        formData.append('kind', 'self');
+
+        const res = await fetch('https://oauth.reddit.com/api/submit', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${tokens.redditAccessToken}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: formData.toString()
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(text);
+          } catch (e) {
+            console.error('Reddit HTML/Text Error:', text);
+            return { status: 'failed', error: 'Reddit API returned invalid response format' };
+          }
+          console.error('Reddit API Error:', JSON.stringify(errorData, null, 2));
+          return { status: 'failed', error: errorData.message || 'Reddit API Error' };
+        }
+        
+        const data = await res.json();
+        return { status: 'published', url: `https://reddit.com${data.url || ''}` };
+      } catch (err) {
+        console.error('Reddit Dispatch Error:', err);
+        return { status: 'failed', error: err.message };
+      }
+    };
+
+    const dispatchHashnode = async () => {
+      if (target !== 'all' && target !== 'hashnode') return { status: 'skipped' };
+      if (!tc?.hashnode) return { status: 'skipped' };
+      if (!tokens.hashnodeKey) return { status: 'failed', error: 'Missing Hashnode API Key' };
+
+      try {
+        // 1. Fetch Publication ID
+        const pubRes = await fetch('https://gql.hashnode.com/', {
+          method: 'POST',
+          headers: {
+            'Authorization': tokens.hashnodeKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ query: 'query { me { publication { id } } }' })
+        });
+        
+        if (!pubRes.ok) {
+           return { status: 'failed', error: 'Failed to fetch Hashnode publication ID' };
+        }
+        
+        const pubData = await pubRes.json();
+        const publicationId = pubData?.data?.me?.publication?.id;
+        if (!publicationId) {
+           return { status: 'failed', error: 'Hashnode Publication ID not found' };
+        }
+
+        let parsedTags = [];
+        if (typeof tc.hashnode.tags === 'string') {
+          parsedTags = tc.hashnode.tags.split(',').map(t => ({ id: "tag", name: t.trim().replace(/[^a-zA-Z0-9]/g, '') })).filter(t => t.name).slice(0, 4);
+        } else if (Array.isArray(tc.hashnode.tags)) {
+          parsedTags = tc.hashnode.tags.map(t => ({ id: "tag", name: typeof t === 'string' ? t.trim().replace(/[^a-zA-Z0-9]/g, '') : '' })).filter(t => t.name).slice(0, 4);
+        }
+
+        // 2. Publish Post
+        const publishMutation = `
+          mutation PublishPost($input: PublishPostInput!) {
+            publishPost(input: $input) {
+              post { url }
+            }
+          }
+        `;
+        
+        const postRes = await fetch('https://gql.hashnode.com/', {
+          method: 'POST',
+          headers: {
+            'Authorization': tokens.hashnodeKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            query: publishMutation,
+            variables: {
+              input: {
+                title: tc.hashnode.title || `${projectName} ${version} Release Notes`,
+                contentMarkdown: tc.hashnode.content || '',
+                publicationId: publicationId,
+                tags: parsedTags
+              }
+            }
+          })
+        });
+
+        if (!postRes.ok) {
+          const text = await postRes.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(text);
+          } catch (e) {
+            console.error('Hashnode HTML/Text Error:', text);
+            return { status: 'failed', error: 'Hashnode API returned invalid response format' };
+          }
+          console.error('Hashnode API Error:', JSON.stringify(errorData, null, 2));
+          return { status: 'failed', error: errorData.errors?.[0]?.message || 'Hashnode API Error' };
+        }
+        
+        const data = await postRes.json();
+        if (data.errors && data.errors.length > 0) {
+           return { status: 'failed', error: data.errors[0].message };
+        }
+        return { status: 'published', url: data.data?.publishPost?.post?.url };
+      } catch (err) {
+        console.error('Hashnode Dispatch Error:', err);
+        return { status: 'failed', error: err.message };
+      }
+    };
+
+    const [githubResult, devtoResult, redditResult, hashnodeResult] = await Promise.allSettled([
       dispatchGitHub(),
-      dispatchDevTo()
+      dispatchDevTo(),
+      dispatchReddit(),
+      dispatchHashnode()
     ]);
 
     const updateState = (platform, resultObj) => {
@@ -146,6 +277,8 @@ export const POST = defineRoute({
     if (!release.publishStates) release.publishStates = {};
     updateState('github', githubResult);
     updateState('devto', devtoResult);
+    updateState('reddit', redditResult);
+    updateState('hashnode', hashnodeResult);
 
     await release.save();
     return { success: true, data: release };

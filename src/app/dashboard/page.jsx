@@ -2,28 +2,48 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useModal } from '@/components/ModalProvider';
 
 export default function DraftsListView() {
   const [releases, setReleases] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [openMenuId, setOpenMenuId] = useState(null);
   const router = useRouter();
+  const { showConfirm, showAlert } = useModal();
+
+  const handleDelete = async (id) => {
+    const confirmed = await showConfirm('Delete this draft permanently?');
+    if (!confirmed) return;
+    
+    try {
+      const res = await fetch(`/api/releases/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        setReleases(prev => prev.filter(r => r._id !== id));
+      } else {
+        await showAlert('Failed to delete draft: ' + (data.error || 'Unknown error'));
+      }
+    } catch (e) {
+      console.error('Delete error', e);
+      await showAlert('Failed to delete draft');
+    }
+  };
 
   useEffect(() => {
     fetch('/api/releases', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          // If empty, supply realistic mock data for initial render
-          if (data.data.length === 0) {
+          /* if (data.data.length === 0) {
             setReleases([
               { _id: 'mock1', projectName: 'bro.js', version: 'v1.4.2', updatedAt: new Date().toISOString(), publishStates: { github: { status: 'published' }, devto: { status: 'published' } } },
               { _id: 'mock2', projectName: 'mock2block', version: 'v0.9.0', updatedAt: new Date().toISOString(), publishStates: { hashnode: { status: 'transformed' } } },
               { _id: 'mock3', projectName: 'creatorpay', version: 'v2.0.0-beta', updatedAt: new Date().toISOString(), publishStates: {} }
             ]);
-          } else {
+          } else { */
             setReleases(data.data);
-          }
+          //}
         }
         setIsLoading(false);
       })
@@ -74,7 +94,29 @@ export default function DraftsListView() {
             >
               <div className="flex justify-between items-start mb-6">
                 <h2 className="text-lg font-mono font-bold text-text-main group-hover:text-accent transition truncate mr-4">{release.projectName}</h2>
-                <span className="font-mono text-xs text-text-muted shrink-0">{release.version}</span>
+                <div className="flex items-center space-x-2 relative">
+                  <span className="font-mono text-xs text-text-muted shrink-0">{release.version}</span>
+                  {!release._id.startsWith('mock') && (
+                    <div className="relative">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === release._id ? null : release._id); }}
+                        className="text-text-muted hover:text-text-main p-1 transition"
+                      >
+                        ⋮
+                      </button>
+                      {openMenuId === release._id && (
+                        <div className="absolute right-0 top-full mt-1 bg-surface-raised border border-surface-raised rounded-sm z-50 overflow-hidden shadow-lg min-w-[100px]">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDelete(release._id); setOpenMenuId(null); }}
+                            className="w-full text-left px-4 py-2 font-mono text-xs text-diff-remove hover:bg-surface transition"
+                          >
+                            delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex space-x-4 mt-auto border-t border-surface/50 pt-4">
                 {['github', 'devto', 'hashnode', 'reddit'].map(plat => (

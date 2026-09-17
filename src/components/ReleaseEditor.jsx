@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useRouter } from 'next/navigation';
+import { useModal } from '@/components/ModalProvider';
 
 export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProjectName, initialVersion, initialMasterContent, initialReleaseType }) {
   const [projectName, setProjectName] = useState(initialProjectName || '');
@@ -14,6 +16,27 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
   const [isTransforming, setIsTransforming] = useState(false);
   const [viewMode, setViewMode] = useState('code'); // 'code' or 'preview'
   const [cooldown, setCooldown] = useState(0);
+  const router = useRouter();
+  const { showConfirm, showAlert } = useModal();
+
+  const handleDelete = async () => {
+    if (!releaseId) return;
+    const confirmed = await showConfirm('Delete this draft permanently?');
+    if (confirmed) {
+      try {
+        const res = await fetch(`/api/releases/${releaseId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          router.push('/dashboard');
+        } else {
+          await showAlert('Failed to delete draft: ' + (data.error || 'Unknown error'));
+        }
+      } catch (e) {
+        console.error('Delete error', e);
+        await showAlert('Failed to delete draft');
+      }
+    }
+  };
 
   useEffect(() => {
     let timer;
@@ -48,7 +71,8 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
 
   const handleSave = async () => {
     if (!projectName || !version || !masterContent) {
-      return alert("Please fill out all required fields.");
+      await showAlert("Please fill out all required fields.");
+      return;
     }
     setIsSaving(true);
     try {
@@ -70,7 +94,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
       if (json.success) {
         if (onUpdateRelease) onUpdateRelease(json.data);
       } else {
-        alert("Save failed: " + (json.error?.message || json.error));
+        await showAlert("Save failed: " + (json.error?.message || json.error));
       }
     } catch(err) {
       console.error(err);
@@ -80,7 +104,8 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
 
   const handleTransform = async () => {
     if (!projectName || !version || !masterContent) {
-      return alert("Please fill out all fields before transforming.");
+      await showAlert("Please fill out all fields before transforming.");
+      return;
     }
     setIsTransforming(true);
     try {
@@ -94,7 +119,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
       
       if (res.status === 429 || (data && data.error && data.error.includes('Rate limit'))) {
         setCooldown(60);
-        alert(data.error || 'Rate limit exceeded. Please wait a minute.');
+        await showAlert(data.error || 'Rate limit exceeded. Please wait a minute.');
       } else if (res.ok && !data.error) {
         setTransformedContent(data);
         setCooldown(60);
@@ -143,7 +168,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
           }
         }
       } else {
-        alert("Transformation failed: " + (data.error?.message || data.error || "Unknown error"));
+        await showAlert("Transformation failed: " + (data.error?.message || data.error || "Unknown error"));
       }
     } catch(err) {
       console.error(err);
@@ -211,7 +236,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
       </div>
 
       <div className="flex-1 flex bg-ink relative group min-h-[300px]">
-        {/* Toggle */}
+
         <div className="absolute top-2 right-4 z-10 flex space-x-1">
           <button 
             onClick={() => setViewMode('code')}
@@ -229,14 +254,14 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
 
         {viewMode === 'code' ? (
           <>
-            {/* Line Numbers Gutter */}
+
             <div className="w-10 bg-surface border-r border-surface-raised py-4 pt-10 flex flex-col items-end pr-2 text-text-muted font-mono text-xs select-none h-full">
               {masterContent.split('\n').map((_, i) => (
                  <div key={i}>{i + 1}</div>
               ))}
               {masterContent === '' && <div>1</div>}
             </div>
-            {/* Textarea */}
+
             <textarea 
               className="flex-1 w-full bg-ink border-0 px-4 py-4 pt-10 text-text-main focus:outline-none font-mono text-sm resize-none"
               placeholder="# Write your release draft..."
@@ -263,29 +288,41 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
           </div>
         )}
         
-        {/* Subtle hover border */}
+
         <div className="absolute inset-0 border border-surface-raised pointer-events-none group-focus-within:border-accent transition"></div>
       </div>
 
-      <div className="flex justify-end space-x-4 p-4 border-t border-surface-raised bg-surface">
-        <button 
-          onClick={handleSave}
-          disabled={isSaving || isTransforming}
-          className="px-4 py-2 border border-surface-raised bg-ink hover:bg-surface-raised text-text-main font-mono text-sm transition rounded-sm disabled:opacity-50"
-        >
-          {isSaving ? 'saving...' : 'save_draft'}
-        </button>
-        <button 
-          onClick={handleTransform}
-          disabled={isTransforming || isSaving || cooldown > 0}
-          className={`px-4 py-2 font-mono font-bold text-sm transition rounded-sm disabled:opacity-50 ${
-            cooldown > 0 
-              ? 'bg-surface text-text-muted cursor-not-allowed border border-surface-raised' 
-              : 'bg-accent text-ink hover:bg-opacity-90'
-          }`}
-        >
-          {cooldown > 0 ? `cooldown... [${cooldown}s]` : isTransforming ? 'transforming...' : 'transform'}
-        </button>
+      <div className="flex justify-between items-center p-4 border-t border-surface-raised bg-surface">
+        <div>
+          {releaseId && (
+            <button 
+              onClick={handleDelete}
+              className="px-4 py-2 border border-surface-raised bg-transparent hover:bg-surface-raised text-diff-remove font-mono text-sm transition rounded-sm"
+            >
+              delete
+            </button>
+          )}
+        </div>
+        <div className="flex space-x-4">
+          <button 
+            onClick={handleSave}
+            disabled={isSaving || isTransforming}
+            className="px-4 py-2 border border-surface-raised bg-ink hover:bg-surface-raised text-text-main font-mono text-sm transition rounded-sm disabled:opacity-50"
+          >
+            {isSaving ? 'saving...' : 'save_draft'}
+          </button>
+          <button 
+            onClick={handleTransform}
+            disabled={isTransforming || isSaving || cooldown > 0}
+            className={`px-4 py-2 font-mono font-bold text-sm transition rounded-sm disabled:opacity-50 ${
+              cooldown > 0 
+                ? 'bg-surface text-text-muted cursor-not-allowed border border-surface-raised' 
+                : 'bg-accent text-ink hover:bg-opacity-90'
+            }`}
+          >
+            {cooldown > 0 ? `cooldown... [${cooldown}s]` : isTransforming ? 'transforming...' : 'transform'}
+          </button>
+        </div>
       </div>
     </div>
   );

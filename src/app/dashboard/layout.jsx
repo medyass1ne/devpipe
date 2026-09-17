@@ -9,7 +9,7 @@ export default async function DashboardLayout({ children }) {
   
   return (
     <div className="min-h-screen bg-ink text-text-main font-sans flex flex-col md:flex-row selection:bg-accent selection:text-ink">
-      {/* Sidebar */}
+
       <aside className="w-full md:w-64 bg-surface border-b md:border-b-0 md:border-r border-surface-raised flex flex-col">
         <div className="p-6 pb-8">
           <h2 className="text-xl font-bold tracking-tight text-text-main uppercase">
@@ -34,7 +34,7 @@ export default async function DashboardLayout({ children }) {
         </div>
       </aside>
 
-      {/* Main Content */}
+
       <main className="flex-1 flex flex-col h-[100vh] overflow-hidden">
         <div className="flex-1 overflow-auto p-6 md:p-8">
           {children}
