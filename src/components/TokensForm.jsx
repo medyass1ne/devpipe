@@ -2,6 +2,7 @@
 import { useState } from 'react';
 
 export default function TokensForm({ initialTokens }) {
+  const enableRedditOAuth = false; // Toggle this in code to disable/enable Reddit OAuth
   const [devtoKey, setDevtoKey] = useState(initialTokens.devtoKey || '');
   const [hashnodeKey, setHashnodeKey] = useState(initialTokens.hashnodeKey || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -75,7 +76,7 @@ export default function TokensForm({ initialTokens }) {
           className="w-full bg-ink border border-surface-raised rounded-sm px-4 py-2.5 text-text-main focus:outline-none focus:border-accent transition font-mono text-sm"
         />
       </div>
-      <div>
+      { enableRedditOAuth && <div>
         <label className="block font-mono text-xs text-text-muted mb-2">Reddit OAuth</label>
         {redditConnected ? (
           <div className="flex items-center justify-between bg-ink border border-surface-raised rounded-sm px-4 py-2 text-sm font-mono">
@@ -97,7 +98,7 @@ export default function TokensForm({ initialTokens }) {
             <span>connect_reddit</span>
           </button>
         )}
-      </div>
+      </div> }
       
       <div className="pt-4 flex items-center justify-between mt-8">
         <span className="font-mono text-xs text-accent">{message}</span>
