@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
   const [cooldown, setCooldown] = useState(0);
   const router = useRouter();
   const { showConfirm, showAlert } = useModal();
+  const lineNumbersRef = useRef(null);
 
   const handleDelete = async () => {
     if (!releaseId) return;
@@ -177,7 +178,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
   };
 
   return (
-    <div className="bg-surface border border-surface-raised flex flex-col flex-1 shadow-none rounded-sm overflow-hidden">
+    <div className="bg-surface border border-surface-raised flex flex-col h-full flex-1 shadow-none rounded-sm overflow-hidden">
       <div className="p-4 border-b border-surface-raised flex space-x-4 bg-ink">
         <div className="flex-1">
           <label className="block font-mono text-xs text-text-muted mb-2">GitHub Repository</label>
@@ -235,7 +236,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
         </div>
       </div>
 
-      <div className="flex-1 flex bg-ink relative group min-h-[300px]">
+      <div className="flex-1 min-h-0 overflow-hidden flex bg-ink relative group">
 
         <div className="absolute top-2 right-4 z-10 flex space-x-1">
           <button 
@@ -255,7 +256,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
         {viewMode === 'code' ? (
           <>
 
-            <div className="w-10 bg-surface border-r border-surface-raised py-4 pt-10 flex flex-col items-end pr-2 text-text-muted font-mono text-xs select-none h-full">
+            <div ref={lineNumbersRef} className="w-10 bg-surface border-r border-surface-raised py-4 pt-10 flex flex-col items-end pr-2 text-text-muted font-mono text-sm overflow-hidden select-none h-full">
               {masterContent.split('\n').map((_, i) => (
                  <div key={i}>{i + 1}</div>
               ))}
@@ -263,10 +264,15 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
             </div>
 
             <textarea 
-              className="flex-1 w-full bg-ink border-0 px-4 py-4 pt-10 text-text-main focus:outline-none font-mono text-sm resize-none"
+              className="flex-1 w-full bg-ink border-0 px-4 py-4 pt-10 text-text-main focus:outline-none font-mono text-sm resize-none whitespace-pre overflow-auto"
               placeholder="# Write your release draft..."
               value={masterContent}
               onChange={(e) => setMasterContent(e.target.value)}
+              onScroll={(e) => {
+                if (lineNumbersRef.current) {
+                  lineNumbersRef.current.scrollTop = e.target.scrollTop;
+                }
+              }}
             ></textarea>
           </>
         ) : (
@@ -292,7 +298,7 @@ export default function ReleaseEditor({ releaseId, onUpdateRelease, initialProje
         <div className="absolute inset-0 border border-surface-raised pointer-events-none group-focus-within:border-accent transition"></div>
       </div>
 
-      <div className="flex justify-between items-center p-4 border-t border-surface-raised bg-surface">
+      <div className="shrink-0 flex justify-between items-center p-4 border-t border-surface-raised bg-surface">
         <div>
           {releaseId && (
             <button 
