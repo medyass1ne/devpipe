@@ -27,7 +27,6 @@ export const GET = defineRoute({
       }
       
       const repos = await res.json();
-      // Only return names of repos the user has push access to (can release)
       const repoNames = repos
         .filter(r => r.permissions && r.permissions.push)
         .map(r => r.name);

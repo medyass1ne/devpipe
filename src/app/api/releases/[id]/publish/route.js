@@ -174,7 +174,6 @@ export const POST = defineRoute({
       if (!tokens.hashnodeKey) return { status: 'failed', error: 'Missing Hashnode API Key' };
 
       try {
-        // 1. Fetch Publication ID
         const pubRes = await fetch('https://gql.hashnode.com/', {
           method: 'POST',
           headers: {
@@ -201,7 +200,6 @@ export const POST = defineRoute({
           parsedTags = tc.hashnode.tags.map(t => ({ id: "tag", name: typeof t === 'string' ? t.trim().replace(/[^a-zA-Z0-9]/g, '') : '' })).filter(t => t.name).slice(0, 4);
         }
 
-        // 2. Publish Post
         const publishMutation = `
           mutation PublishPost($input: PublishPostInput!) {
             publishPost(input: $input) {

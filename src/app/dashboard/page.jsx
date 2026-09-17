@@ -71,7 +71,7 @@ export default function DraftsListView() {
       </div>
       
       <div className="flex space-x-4 border-b border-surface-raised pb-4">
-        {['all', 'github', 'devto', 'hashnode'].map(f => (
+        {['all', 'github', 'devto', 'hashnode', 'reddit'].map(f => (
           <button 
             key={f} 
             onClick={() => setFilter(f)}

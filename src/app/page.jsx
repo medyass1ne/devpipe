@@ -158,7 +158,7 @@ export default function LandingPage() {
             transition={{ delay: 4.5, duration: 0.5 }}
           >
             <Link 
-              href="/login"
+              href={session ? "/dashboard" : "/login"}
               className="px-8 py-4 bg-accent text-ink font-mono font-bold text-lg hover:bg-opacity-90 transition rounded-sm shadow-none"
             >
               start_pipeline
