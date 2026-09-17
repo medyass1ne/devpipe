@@ -14,25 +14,35 @@ export const POST = defineRoute({
   handler: async (ctx) => {
     const { projectName, version, releaseType, masterContent } = ctx.body;
     
-    const prompt = `You are a DevRel engineer. Transform this master release markdown into 4 formats: github (highly technical, diffs, install steps), devto (conversational, emojis, story-driven intro), hashnode (professional architectural breakdown), reddit (plaintext, r/node style, problem-first, no marketing).
+    const prompt = `You are an authentic, expert developer relations engineer. Your job is to adapt the provided Master Content into 4 platform-specific formats.
+
+CRITICAL FIDELITY RULE: 
+DO NOT invent features, CLI commands, installation steps, URLs, or architectural details. You must ONLY use the facts, links, and details explicitly provided in the Master Content. If the master content is about a web app, do not hallucinate a CLI.
+
+ANTI-AI SLOP RULE:
+Write like a real, grounded human developer. Ban words like "delve", "revolutionary", "game-changer", "testament", "unlock", or "supercharge". Avoid overly enthusiastic corporate marketing fluff. 
+
+Platform Personas:
+- github: Clean, structured, and technical. Use standard Markdown headers. Focus on what it is, how it works, and direct links.
+- devto: Conversational and engaging. Use light emojis. Start with a relatable hook based on the problem the draft solves.
+- hashnode: Professional and clean. Reads like an engineering blog post. Focus on the "why" and "how".
+- reddit: Raw, authentic, and text-heavy (r/programming or r/node style). NO marketing fluff. NO emojis. Get straight to the problem and the technical solution.
 
 The user is publishing a: ${releaseType}.
-- If 'first_release': Treat this as a brand new project launch. Introduce what the tool is, the core problem it solves, and why it was built. DO NOT use words like 'update', 'new version', 'changes', or assume the audience knows what the project is.
-- If 'update': Treat this as a standard changelog announcement. Focus on what is new in this specific version, breaking changes, and improvements over the previous version.
+- If 'first_release': Treat this as a brand new project launch. Introduce the tool, the core problem it solves, and why it was built. DO NOT assume the audience knows what the project is.
+- If 'update': Treat this as a standard changelog announcement. Focus on what is new in this specific version.
 
 Return ONLY a valid JSON object with EXACTLY this structure:
 {
   "github": { "title": "...", "content": "..." },
-  "devto": { "title": "...", "tags": ["tag1", "tag2", "tag3", "tag4"], "content": "..." },
-  "hashnode": { "title": "...", "tags": ["tag1", "tag2", "tag3", "tag4"], "content": "..." },
+  "devto": { "title": "...", "tags": ["tag1", "tag2", "tag3"], "content": "..." },
+  "hashnode": { "title": "...", "tags": ["tag1", "tag2", "tag3"], "content": "..." },
   "reddit": { "title": "...", "content": "..." }
 }
 
-CRITICAL RULES for devto tags:
+CRITICAL RULES for devto & hashnode tags:
 - Must be an array of strings (minimum 1, maximum 4).
 - Contain ONLY lowercase alphanumeric characters (no spaces, no special chars, e.g., "javascript").
-
-Keep each platform's content concise to avoid token limits. Ensure the JSON is completely formed and properly closed with a } at the end.
 
 Project: ${projectName}
 Version: ${version}
